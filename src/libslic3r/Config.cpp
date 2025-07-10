@@ -1785,8 +1785,6 @@ void PrintConfigDef::init_fff_params()
     def->sidetext = "mm";
     def->category = L("Quality");
     def->set_min(0);
-
-    // ...existing code...
 }
 
 #include <cereal/types/polymorphic.hpp>
