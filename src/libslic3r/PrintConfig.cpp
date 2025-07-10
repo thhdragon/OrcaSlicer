@@ -5838,6 +5838,37 @@ void PrintConfigDef::init_fff_params()
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionBool(true));
 
+    // Feature-specific XY shrinkage compensation
+    def = this->add("outer_wall_shrinkage_xy", coPercent);
+    def->label = L("Outer wall XY shrinkage");
+    def->category = L("Quality");
+    def->tooltip = L("Compensate XY shrinkage specifically for outer walls. Set to 100% to use global filament_shrink. Values greater than 100% expand, less than 100% contract.");
+    def->sidetext = "%";
+    def->min = 50;
+    def->max = 150;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionPercent(100));
+
+    def = this->add("inner_wall_shrinkage_xy", coPercent);
+    def->label = L("Inner wall XY shrinkage");
+    def->category = L("Quality");
+    def->tooltip = L("Compensate XY shrinkage specifically for inner walls. Set to 100% to use global filament_shrink. Values greater than 100% expand, less than 100% contract.");
+    def->sidetext = "%";
+    def->min = 50;
+    def->max = 150;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionPercent(100));
+
+    def = this->add("hole_shrinkage_xy", coPercent);
+    def->label = L("Hole XY shrinkage compensation");
+    def->category = L("Quality");
+    def->tooltip = L("Compensate XY shrinkage specifically for holes (applied to hole perimeters). Set to 100% to use global filament_shrink. Values greater than 100% make holes larger, less than 100% make them smaller. This is applied before X-Y Hole Compensation (absolute offset).");
+    def->sidetext = "%";
+    def->min = 50;
+    def->max = 150;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionPercent(100));
+
     def = this->add("wall_generator", coEnum);
     def->label = L("Wall generator");
     def->category = L("Quality");

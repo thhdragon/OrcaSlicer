@@ -258,15 +258,62 @@ static ExtrusionEntityCollection traverse_loops(const PerimeterGenerator &perime
     // loops is an arrayref of ::Loop objects
     // turn each one into an ExtrusionLoop object
     ExtrusionEntityCollection   coll;
-    Polygon                     fuzzified;
+    Polygon                     fuzzified_poly; // Renamed to avoid conflict
     
     // Detect steep overhangs
     bool overhangs_reverse = perimeter_generator.config->overhang_reverse &&
                              perimeter_generator.layer_id % 2 == 1; // Only calculate overhang degree on even (from GUI POV) layers
 
-    for (const PerimeterGeneratorLoop &loop : loops) {
-        bool is_external = loop.is_external();
-        bool is_small_width = loop.is_smaller_width_perimeter;
+    // Get global XY shrinkage factor
+    double global_xy_shrink_factor = 1.0;
+    if (perimeter_generator.print_config->filament_shrink.values.size() > 0) { // Assuming filament_shrink is per-extruder
+        // Determine current extruder index. For perimeters, it's usually wall_filament.
+        unsigned int extruder_idx = 0; // Default to first extruder
+        if (perimeter_generator.config->wall_filament.value > 0 &&
+            (unsigned int)perimeter_generator.config->wall_filament.value <= perimeter_generator.print_config->filament_shrink.values.size()) {
+            extruder_idx = perimeter_generator.config->wall_filament.value - 1;
+        }
+        global_xy_shrink_factor = perimeter_generator.print_config->filament_shrink.values[extruder_idx] / 100.0;
+    }
+
+
+    for (const PerimeterGeneratorLoop &loop_orig : loops) {
+        Polygon current_polygon = loop_orig.polygon;
+        double feature_specific_xy_shrink_config_val = 100.0; // Default to 100% (no specific override)
+        bool is_external = loop_orig.is_external();
+        bool is_hole = !loop_orig.is_contour;
+
+        if (is_external) {
+            feature_specific_xy_shrink_config_val = perimeter_generator.config->outer_wall_shrinkage_xy.value;
+        } else if (is_hole) {
+            feature_specific_xy_shrink_config_val = perimeter_generator.config->hole_shrinkage_xy.value;
+        } else { // Inner wall
+            feature_specific_xy_shrink_config_val = perimeter_generator.config->inner_wall_shrinkage_xy.value;
+        }
+
+        double target_total_shrink_factor = feature_specific_xy_shrink_config_val / 100.0;
+        double scaling_to_apply_now = 1.0;
+
+        if (std::abs(target_total_shrink_factor - 1.0) > EPSILON) { // If specific shrinkage is set (not 100%)
+             // This assumes global_xy_shrink_factor has already been applied to the input slices.
+             // We want the final_dimensions = original_dimensions * target_total_shrink_factor.
+             // Since current_polygon_dimensions = original_dimensions * global_xy_shrink_factor,
+             // we need to scale current_polygon_dimensions by (target_total_shrink_factor / global_xy_shrink_factor).
+            if (std::abs(global_xy_shrink_factor) > EPSILON) { // Avoid division by zero
+                 scaling_to_apply_now = target_total_shrink_factor / global_xy_shrink_factor;
+            } else if (std::abs(target_total_shrink_factor - 1.0) > EPSILON) { // global is effectively zero or 100%, so just apply target
+                 scaling_to_apply_now = target_total_shrink_factor;
+            }
+        }
+        // If target_total_shrink_factor is 1.0 (default), scaling_to_apply_now remains 1.0, so no extra scaling here.
+        // The object is assumed to be already scaled by global_xy_shrink_factor.
+
+        if (std::abs(scaling_to_apply_now - 1.0) > EPSILON) {
+            Point centroid = current_polygon.centroid();
+            current_polygon.scale(scaling_to_apply_now, scaling_to_apply_now, centroid);
+        }
+
+        bool is_small_width = loop_orig.is_smaller_width_perimeter;
         
         ExtrusionRole role;
         ExtrusionLoopRole loop_role;
@@ -609,9 +656,62 @@ static ExtrusionEntityCollection traverse_extrusions(const PerimeterGenerator& p
     bool overhangs_reverse = perimeter_generator.config->overhang_reverse &&
                              perimeter_generator.layer_id % 2 == 1;  // Only calculate overhang degree on even (from GUI POV) layers
 
+    // Get global XY shrinkage factor
+    double global_xy_shrink_factor = 1.0;
+    if (perimeter_generator.print_config->filament_shrink.values.size() > 0) {
+        unsigned int extruder_idx = 0;
+        if (perimeter_generator.config->wall_filament.value > 0 &&
+            (unsigned int)perimeter_generator.config->wall_filament.value <= perimeter_generator.print_config->filament_shrink.values.size()) {
+            extruder_idx = perimeter_generator.config->wall_filament.value - 1;
+        }
+        global_xy_shrink_factor = perimeter_generator.print_config->filament_shrink.values[extruder_idx] / 100.0;
+    }
+
     ExtrusionEntityCollection extrusion_coll;
     for (PerimeterGeneratorArachneExtrusion& pg_extrusion : pg_extrusions) {
         Arachne::ExtrusionLine* extrusion = pg_extrusion.extrusion;
+
+        // Apply feature-specific XY shrinkage compensation
+        double feature_specific_xy_shrink_config_val = 100.0;
+        bool is_external = extrusion->inset_idx == 0;
+        // For Arachne, a hole is a non-contour closed loop.
+        bool is_hole = extrusion->is_closed && !pg_extrusion.is_contour;
+
+        if (is_external) {
+            feature_specific_xy_shrink_config_val = perimeter_generator.config->outer_wall_shrinkage_xy.value;
+        } else if (is_hole) {
+            feature_specific_xy_shrink_config_val = perimeter_generator.config->hole_shrinkage_xy.value;
+        } else { // Inner wall
+            feature_specific_xy_shrink_config_val = perimeter_generator.config->inner_wall_shrinkage_xy.value;
+        }
+
+        double target_total_shrink_factor = feature_specific_xy_shrink_config_val / 100.0;
+        double scaling_to_apply_now = 1.0;
+
+        if (std::abs(target_total_shrink_factor - 1.0) > EPSILON) {
+            if (std::abs(global_xy_shrink_factor) > EPSILON) {
+                scaling_to_apply_now = target_total_shrink_factor / global_xy_shrink_factor;
+            } else if (std::abs(target_total_shrink_factor - 1.0) > EPSILON) {
+                scaling_to_apply_now = target_total_shrink_factor;
+            }
+        }
+
+        if (std::abs(scaling_to_apply_now - 1.0) > EPSILON && !extrusion->junctions.empty()) {
+            Points points_to_scale;
+            points_to_scale.reserve(extrusion->junctions.size());
+            for(const auto& junction : extrusion->junctions) {
+                points_to_scale.push_back(junction.p);
+            }
+            Point centroid = Polygon(points_to_scale).centroid(); // Approximate centroid
+
+            for(auto& junction : extrusion->junctions) {
+                Point original_p = junction.p;
+                Point translated_p = original_p - centroid;
+                Point scaled_p(std::round(translated_p.x() * scaling_to_apply_now), std::round(translated_p.y() * scaling_to_apply_now));
+                junction.p = scaled_p + centroid;
+            }
+        }
+
         if (extrusion->empty())
             continue;
 
@@ -1785,6 +1885,36 @@ void PerimeterGenerator::process_classic()
                 reorient_perimeters(entities, steep_overhang_contour, steep_overhang_hole,
                                     // Reverse internal only if the wall direction is auto
                                     this->config->overhang_reverse_internal_only && wall_direction == WallDirection::Auto);
+            }
+
+            // Apply XY Hole Compensation (absolute offset) after percentage scaling has been done in traverse_loops
+            if (std::abs(this->object_config->xy_hole_compensation.value) > EPSILON) {
+                for (ExtrusionEntity* entity : entities.entities) {
+                    if (entity->is_loop()) {
+                        ExtrusionLoop* loop = static_cast<ExtrusionLoop*>(entity);
+                        if ((loop->loop_role() & elrHole) == elrHole) {
+                            // xy_hole_compensation makes holes bigger by a positive value.
+                            // So we need to offset outwards, which for a CW hole means negative offset.
+                            Polygons new_polygons = Slic3r::offset(loop->polygon(), -this->object_config->xy_hole_compensation.value, ClipperLib::jtRound, this->perimeter_flow.scaled_width() / 2.0);
+                            if (!new_polygons.empty()) {
+                                // Assuming the largest resulting polygon is the correct one
+                                Polygon new_poly = new_polygons.front();
+                                for (size_t k = 1; k < new_polygons.size(); ++k) {
+                                    if (new_polygons[k].area() > new_poly.area()) {
+                                        new_poly = new_polygons[k];
+                                    }
+                                }
+                                // Reconstruct the ExtrusionLoop paths. This is simplified;
+                                // The original ExtrusionLoop might have multiple ExtrusionPaths with different roles/flows.
+                                // This simplification assumes a single flow for the compensated hole.
+                                ExtrusionPath new_path(loop->paths.front().role(), loop->paths.front().mm3_per_mm, loop->paths.front().width, loop->paths.front().height);
+                                new_path.polyline = new_poly.split_at_first_point();
+                                loop->paths.clear();
+                                loop->paths.emplace_back(std::move(new_path));
+                            }
+                        }
+                    }
+                }
             }
 
             // if brim will be printed, reverse the order of perimeters so that
