@@ -1753,17 +1753,17 @@ void PrintConfigDef::init_fff_params()
     def->tooltip = L("Optimizes slicing for HueForge style prints (thin layers, filament painting). Applies to the entire object.");
     def->category = L("Quality");
 
-    // HueForge-specific retraction settings
+    // HueForge-specific retraction settings (PrintObjectConfig)
     def = this->add("hueforge_retraction_length", coFloat);
-    def->set_default_value(new ConfigOptionFloat(0.8)); // Default could be same as standard retraction, or a specific new default
+    def->set_default_value(new ConfigOptionFloat(0.8));
     def->label = L("HueForge: Retraction Length");
     def->tooltip = L("Specific retraction length for HueForge infill segments. Set to -1 to use standard retraction settings.");
     def->sidetext = "mm";
-    def->category = L("Quality"); // Or a new "HueForge" category
-    def->set_min(-1); // Allow -1 to signify using default retraction
+    def->category = L("Quality");
+    def->set_min(-1);
 
     def = this->add("hueforge_retraction_speed", coFloat);
-    def->set_default_value(new ConfigOptionFloat(35)); // Default could be same as standard retraction speed
+    def->set_default_value(new ConfigOptionFloat(35));
     def->label = L("HueForge: Retraction Speed");
     def->tooltip = L("Specific retraction speed for HueForge infill segments. Set to -1 to use standard retraction settings.");
     def->sidetext = "mm/s";
@@ -1771,7 +1771,7 @@ void PrintConfigDef::init_fff_params()
     def->set_min(-1);
 
     def = this->add("hueforge_deretraction_speed", coFloat);
-    def->set_default_value(new ConfigOptionFloat(35)); // Default could be same as standard deretraction speed
+    def->set_default_value(new ConfigOptionFloat(35));
     def->label = L("HueForge: Deretraction Speed");
     def->tooltip = L("Specific deretraction speed for HueForge infill segments. Set to -1 to use standard retraction settings. If 0, uses retraction speed.");
     def->sidetext = "mm/s";
@@ -1779,7 +1779,7 @@ void PrintConfigDef::init_fff_params()
     def->set_min(-1);
 
     def = this->add("hueforge_min_extrusion_before_retract", coFloat);
-    def->set_default_value(new ConfigOptionFloat(0.5)); // Default small value, e.g., 0.5mm of filament
+    def->set_default_value(new ConfigOptionFloat(0.5));
     def->label = L("HueForge: Min Extrusion Before Retract");
     def->tooltip = L("Minimum amount of filament (in mm) that must be extruded for a HueForge segment before a retraction is triggered. Helps prevent filament grinding on very short segments. Set to 0 to disable this check.");
     def->sidetext = "mm";
