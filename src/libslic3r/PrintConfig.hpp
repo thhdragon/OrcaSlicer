@@ -61,6 +61,7 @@ enum InfillPattern : int {
     ipConcentric, ipRectilinear, ipGrid, ip2DLattice, ipLine, ipCubic, ipTriangles, ipStars, ipGyroid, ipTpmsD, ipHoneycomb, ipAdaptiveCubic, ipMonotonic, ipMonotonicLine, ipAlignedRectilinear, ip2DHoneycomb, ip3DHoneycomb,
     ipHilbertCurve, ipArchimedeanChords, ipOctagramSpiral, ipSupportCubic, ipSupportBase, ipConcentricInternal,
     ipLightning, ipCrossHatch, ipQuarterCubic, ipZigZag, ipCrossZag, ipLockedZag,
+    ipHueForge, // Added new HueForge infill pattern
     ipCount,
 };
 
@@ -904,6 +905,14 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloat,              tree_support_branch_angle_organic))
     ((ConfigOptionEnum<GapFillTarget>,gap_fill_target))
     ((ConfigOptionFloat,              min_length_factor))
+
+    // HueForge mode
+    ((ConfigOptionBool,                hueforge_mode))
+    // HueForge-specific retraction settings
+    ((ConfigOptionFloat,               hueforge_retraction_length))
+    ((ConfigOptionFloat,               hueforge_retraction_speed))
+    ((ConfigOptionFloat,               hueforge_deretraction_speed))
+    ((ConfigOptionFloat,               hueforge_min_extrusion_before_retract))
 
     // Move all acceleration and jerk settings to object
     ((ConfigOptionFloat,              default_acceleration))

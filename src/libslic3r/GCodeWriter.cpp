@@ -801,18 +801,38 @@ std::string GCodeWriter::_retract(double length, double restart_extra, const std
         length = 1;
 
     std::string gcode;
-    if (double dE = m_extruder->retract(length, restart_extra);  !is_zero(dE)) {
+    bool custom_retraction = false;
+    double retract_speed_val = m_extruder->retract_speed();
+
+    if (m_current_object_config && m_current_object_config->hueforge_mode && m_last_extrusion_role == erHueForgeInfill) {
+        double extruded_since_last_retract = m_extruder->E_absolute() - m_last_hueforge_e_unretracted;
+        if (m_current_object_config->hueforge_min_extrusion_before_retract > 0 && 
+            extruded_since_last_retract < m_current_object_config->hueforge_min_extrusion_before_retract) {
+            return ""; // Skip retraction
+        }
+
+        if (m_current_object_config->hueforge_retraction_length >= 0) {
+            length = m_current_object_config->hueforge_retraction_length;
+            custom_retraction = true;
+        }
+        if (m_current_object_config->hueforge_retraction_speed > 0) {
+            retract_speed_val = m_current_object_config->hueforge_retraction_speed;
+            custom_retraction = true;
+        }
+    }
+
+    if (double dE = m_extruder->retract(length, restart_extra); !is_zero(dE)) {
         if (this->config.use_firmware_retraction) {
             gcode = FLAVOR_IS(gcfMachinekit) ? "G22 ; retract\n" : "G10 ; retract\n";
-        }
-        else {
-            // BBS
+        } else {
             GCodeG1Formatter w;
             w.emit_e(m_extruder->E());
-            w.emit_f(m_extruder->retract_speed() * 60.);
-            // BBS
-            w.emit_comment(GCodeWriter::full_gcode_comment, comment);
+            w.emit_f(retract_speed_val * 60.);
+            w.emit_comment(GCodeWriter::full_gcode_comment, comment + (custom_retraction ? " (HueForge)" : ""));
             gcode = w.string();
+        }
+        if (m_current_object_config && m_current_object_config->hueforge_mode && m_last_extrusion_role == erHueForgeInfill) {
+            m_last_hueforge_e_unretracted = m_extruder->E_absolute(); // Store absolute E after retraction
         }
     }
     
@@ -825,23 +845,41 @@ std::string GCodeWriter::_retract(double length, double restart_extra, const std
 std::string GCodeWriter::unretract()
 {
     std::string gcode;
-    
+    bool custom_deretraction = false;
+    double deretract_speed_val = m_extruder->deretract_speed();
+    double unretract_amount = 0; // Will be set by m_extruder->unretract() by default
+
+    // Check if the retraction that occurred *before* this unretract was for HueForge.
+    // This implies m_last_extrusion_role should be checked based on its state *before* the travel move that might precede this unretract.
+    // For simplicity, we use the current m_last_extrusion_role. If issues arise, this logic might need refinement
+    // to explicitly track the role associated with the retraction event.
+    if (m_current_object_config && m_current_object_config->hueforge_mode && m_last_extrusion_role == erHueForgeInfill) {
+        if (m_current_object_config->hueforge_deretraction_speed > 0) {
+            deretract_speed_val = m_current_object_config->hueforge_deretraction_speed;
+            custom_deretraction = true;
+        }
+        // If m_last_hueforge_e_unretracted was set, it means the previous retraction was HueForge-specific.
+        // The amount to unretract is implicitly handled by m_extruder->unretract() which uses the stored retracted amount.
+        // No special logic needed for unretract_amount here unless HueForge needs to override the amount itself,
+        // which is not typical (usually unretract matches retract).
+        // We reset m_last_hueforge_e_unretracted after any unretraction if it was a HueForge infill.
+        // This is reset here to ensure it's cleared even if the unretraction amount is zero.
+         m_last_hueforge_e_unretracted = m_extruder->E_absolute() + m_extruder->retracted_diff(); // Expected E after unretraction
+    }
+
     if (FLAVOR_IS(gcfMakerWare))
         gcode = "M101 ; extruder on\n";
     
-    if (double dE = m_extruder->unretract(); !is_zero(dE)) {
+    if (double dE = m_extruder->unretract(&unretract_amount); !is_zero(dE)) { // Pass address if unretract can take a pointer to override amount
         if (this->config.use_firmware_retraction) {
             gcode += FLAVOR_IS(gcfMachinekit) ? "G23 ; unretract\n" : "G11 ; unretract\n";
             gcode += this->reset_e();
         }
         else {
-            //BBS
-            // use G1 instead of G0 because G0 will blend the restart with the previous travel move
             GCodeG1Formatter w;
             w.emit_e(m_extruder->E());
-            w.emit_f(m_extruder->deretract_speed() * 60.);
-            //BBS
-            w.emit_comment(GCodeWriter::full_gcode_comment, " ; unretract");
+            w.emit_f(deretract_speed_val * 60.);
+            w.emit_comment(GCodeWriter::full_gcode_comment, std::string("unretract") + (custom_deretraction ? " (HueForge)" : ""));
             gcode += w.string();
         }
     }

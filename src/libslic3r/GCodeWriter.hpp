@@ -25,7 +25,9 @@ public:
         m_lifted(0),
         m_to_lift(0),
         m_to_lift_type(LiftType::NormalLift),
-        m_current_speed(3600), m_is_first_layer(true)
+        m_current_speed(3600), m_is_first_layer(true),
+        m_last_hueforge_e_unretracted(0.0), // Initialize here
+        m_last_extrusion_role(erNone) // Initialize here
         {}
     Extruder*            extruder()             { return m_extruder; }
     const Extruder*      extruder()     const   { return m_extruder; }
@@ -121,6 +123,11 @@ public:
 
     // Returns whether this flavor supports separate print and travel acceleration.
     static bool supports_separate_travel_acceleration(GCodeFlavor flavor);
+
+    // HueForge: Setter and getter for current object config
+    void        set_current_object_config(const PrintObjectConfig* config) { m_current_object_config = config; }
+    const PrintObjectConfig* current_object_config() const { return m_current_object_config; }
+
   private:
 	// Extruders are sorted by their ID, so that binary search is possible.
     std::vector<Extruder> m_extruders;
@@ -169,6 +176,9 @@ public:
     bool            m_is_bbl_printers = false;
     double          m_current_speed;
     bool            m_is_first_layer = true;
+    double          m_last_hueforge_e_unretracted { 0.0 }; // For HueForge min_extrusion_before_retract
+    ExtrusionRole   m_last_extrusion_role { erNone }; // To know the role of the extrusion preceding a retraction
+    const PrintObjectConfig* m_current_object_config { nullptr };
 
     enum class Acceleration {
         Travel,

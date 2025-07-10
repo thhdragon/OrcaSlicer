@@ -1469,9 +1469,9 @@ bool DynamicConfig::operator==(const DynamicConfig &rhs) const
     auto it2     = rhs.options.begin();
     auto it2_end = rhs.options.end();
     for (; it1 != it1_end && it2 != it2_end; ++ it1, ++ it2)
-		if (it1->first != it2->first || *it1->second != *it2->second)
-			// key or value differ
-			return false;
+			if (it1->first != it2->first || *it1->second != *it2->second)
+				// key or value differ
+				return false;
     return it1 == it1_end && it2 == it2_end;
 }
 
@@ -1562,7 +1562,7 @@ bool DynamicConfig::read_cli(int argc, const char* const argv[], t_config_option
             //BBS: don't use 'no-' for boolean options
             boost::nowide::cerr << "Invalid option --" << token.c_str() << std::endl;
             return false;
-            /* Remove the "no-" prefix used to negate boolean options.
+            /* Remove the "no-" prefix used to negate boolean options
             std::string yes_token;
             if (boost::starts_with(token, "no-")) {
                 yes_token = token.substr(3);
@@ -1695,7 +1695,7 @@ static inline bool dynamic_config_iterate(const DynamicConfig &lhs, const Dynami
             }
             else if (fn(i->first, i->second.get(), j->second.get()))
                 // Early exit by fn.
-                return true;
+                                                             return true;
             ++ i;
             ++ j;
         }
@@ -1740,6 +1740,53 @@ t_config_option_keys DynamicConfig::equal(const DynamicConfig &other) const
     return equal;
 }
 
+}
+#include "Config.hpp"
+// In PrintConfigDef::init_fff_params(), after ConfigOptionDef* def;
+void PrintConfigDef::init_fff_params()
+{
+    ConfigOptionDef* def;
+    // HueForge mode (PrintObjectConfig)
+    def = this->add("hueforge_mode", coBool);
+    def->set_default_value(new ConfigOptionBool(false));
+    def->label = L("HueForge Mode");
+    def->tooltip = L("Optimizes slicing for HueForge style prints (thin layers, filament painting). Applies to the entire object.");
+    def->category = L("Quality");
+
+    // HueForge-specific retraction settings (PrintObjectConfig)
+    def = this->add("hueforge_retraction_length", coFloat);
+    def->set_default_value(new ConfigOptionFloat(0.8));
+    def->label = L("HueForge: Retraction Length");
+    def->tooltip = L("Specific retraction length for HueForge infill segments. Set to -1 to use standard retraction settings.");
+    def->sidetext = "mm";
+    def->category = L("Quality");
+    def->set_min(-1);
+
+    def = this->add("hueforge_retraction_speed", coFloat);
+    def->set_default_value(new ConfigOptionFloat(35));
+    def->label = L("HueForge: Retraction Speed");
+    def->tooltip = L("Specific retraction speed for HueForge infill segments. Set to -1 to use standard retraction settings.");
+    def->sidetext = "mm/s";
+    def->category = L("Quality");
+    def->set_min(-1);
+
+    def = this->add("hueforge_deretraction_speed", coFloat);
+    def->set_default_value(new ConfigOptionFloat(35));
+    def->label = L("HueForge: Deretraction Speed");
+    def->tooltip = L("Specific deretraction speed for HueForge infill segments. Set to -1 to use standard retraction settings. If 0, uses retraction speed.");
+    def->sidetext = "mm/s";
+    def->category = L("Quality");
+    def->set_min(-1);
+
+    def = this->add("hueforge_min_extrusion_before_retract", coFloat);
+    def->set_default_value(new ConfigOptionFloat(0.5));
+    def->label = L("HueForge: Min Extrusion Before Retract");
+    def->tooltip = L("Minimum amount of filament (in mm) that must be extruded for a HueForge segment before a retraction is triggered. Helps prevent filament grinding on very short segments. Set to 0 to disable this check.");
+    def->sidetext = "mm";
+    def->category = L("Quality");
+    def->set_min(0);
+
+    // ...existing code...
 }
 
 #include <cereal/types/polymorphic.hpp>
