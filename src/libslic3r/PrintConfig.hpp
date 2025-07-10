@@ -913,6 +913,10 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloat,               hueforge_retraction_speed))
     ((ConfigOptionFloat,               hueforge_deretraction_speed))
     ((ConfigOptionFloat,               hueforge_min_extrusion_before_retract))
+    // HueForge infill specific overrides
+    ((ConfigOptionPercent,             hueforge_infill_wall_overlap))
+    ((ConfigOptionFloatOrPercent,      hueforge_anchor_length))
+    ((ConfigOptionFloatOrPercent,      hueforge_anchor_length_max))
 
     // Move all acceleration and jerk settings to object
     ((ConfigOptionFloat,              default_acceleration))

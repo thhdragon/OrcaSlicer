@@ -1785,6 +1785,37 @@ void PrintConfigDef::init_fff_params()
     def->sidetext = "mm";
     def->category = L("Quality");
     def->set_min(0);
+
+    // HueForge infill specific overrides
+    def = this->add("hueforge_infill_wall_overlap", coPercent);
+    def->set_default_value(new ConfigOptionPercent(5.0)); // Defaulting to 5%
+    def->label = L("HueForge: Infill/Wall Overlap");
+    def->tooltip = L("Overlap between HueForge infill and walls, as a percentage of infill line width. Default is 5%.");
+    def->sidetext = "%";
+    def->category = L("Quality");
+    def->min = 0;
+    def->max = 100;
+    def->mode = comAdvanced;
+
+    def = this->add("hueforge_anchor_length", coFloatOrPercent);
+    def->set_default_value(new ConfigOptionFloatOrPercent(0, false)); // Defaulting to 0mm
+    def->label = L("HueForge: Anchor Length");
+    def->tooltip = L("Connect HueForge infill to an internal perimeter with a short segment. If expressed as a percentage, it's relative to infill line width. Default is 0mm (minimal anchoring).");
+    def->sidetext = L("mm or %");
+    def->category = L("Quality");
+    def->ratio_over = "sparse_infill_line_width";
+    def->min = 0;
+    def->mode = comAdvanced;
+
+    def = this->add("hueforge_anchor_length_max", coFloatOrPercent);
+    def->set_default_value(new ConfigOptionFloatOrPercent(25, true)); // Defaulting to 25% of nozzle diameter
+    def->label = L("HueForge: Max Anchor Length");
+    def->tooltip = L("Maximum length for the HueForge infill anchor. If expressed as a percentage, it's relative to nozzle diameter. Default is 25% of nozzle diameter.");
+    def->sidetext = L("mm or %");
+    def->category = L("Quality");
+    def->ratio_over = "nozzle_diameter";
+    def->min = 0;
+    def->mode = comAdvanced;
 }
 
 #include <cereal/types/polymorphic.hpp>
