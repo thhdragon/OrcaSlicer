@@ -15,7 +15,6 @@ public:
     ~FillHueForge() override = default;
 
     Fill* clone() const override { return new FillHueForge(*this); }
-
     // This will be the main method to override for custom HueForge logic
     // Polylines fill_surface(const Surface *surface, const FillParams &params) override; // Keep this if direct polyline generation is simpler initially
     void fill_surface_extrusion(const Surface *surface, const FillParams &params, ExtrusionEntitiesPtr &out) override;

@@ -35,7 +35,6 @@ void FillHueForge::fill_surface_extrusion(const Surface *surface, const FillPara
         // This is a percentage of the sparse infill line width.
         // TODO: Make this (5.0) a new ConfigOption: `hueforge_infill_wall_overlap_percent`
         modified_region_config.infill_wall_overlap.value = 5.0;
-
         FillParams hueforge_params = params;
         hueforge_params.config = &modified_region_config; // Point to our modified region config
 
@@ -48,7 +47,6 @@ void FillHueForge::fill_surface_extrusion(const Surface *surface, const FillPara
         for (const ExPolygon& region_expoly : surface->expolygon) {
             FillParams current_iter_params = hueforge_params; // Start with HueForge-tuned params
             bool is_small_region = region_expoly.area() < small_region_area_threshold;
-
             if (is_small_region) {
                 // For very small regions, force 100% density to ensure they are "painted".
                 current_iter_params.density = 1.0f;
@@ -56,7 +54,7 @@ void FillHueForge::fill_surface_extrusion(const Surface *surface, const FillPara
 
             Surface current_surface_part = *surface;
             current_surface_part.expolygon = region_expoly; // Process this part of the surface
-
+          
             // Call the parent's (FillRectilinear) fill_surface method.
             // This method internally calculates `this->overlap` based on `current_iter_params.config->infill_wall_overlap`
             // and `current_iter_params.flow.width()`.
