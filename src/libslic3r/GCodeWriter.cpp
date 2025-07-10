@@ -714,8 +714,15 @@ std::string GCodeWriter::extrude_to_xy(const Vec2d &point, double dE, const std:
     if(std::abs(dE) <= std::numeric_limits<double>::epsilon())
         force_no_extrusion = true;
     
-    if (!force_no_extrusion)
+    if (!force_no_extrusion) {
         m_extruder->extrude(dE);
+        if (m_current_object_config && m_current_object_config->hueforge_mode) { // No need to check role here, just accumulate if in HF mode
+            // m_last_hueforge_e_unretracted is set at unretract time to current m_extruder->E_absolute()
+            // So, this direct addition is only correct if E_absolute() at unretract was 0.
+            // It's better to track the *absolute* E value.
+            // This will be handled by setting m_last_hueforge_e_unretracted at unretract.
+        }
+    }
 
     //BBS: take plate offset into consider
     Vec2d point_on_plate = { point(0) - m_x_offset, point(1) - m_y_offset };
@@ -736,8 +743,12 @@ std::string GCodeWriter::extrude_arc_to_xy(const Vec2d& point, const Vec2d& cent
 {
     m_pos(0) = point(0);
     m_pos(1) = point(1);
-    if (!force_no_extrusion)
+    if (!force_no_extrusion) {
         m_extruder->extrude(dE);
+        if (m_current_object_config && m_current_object_config->hueforge_mode) {
+             // See comment in extrude_to_xy
+        }
+    }
 
     Vec2d point_on_plate = { point(0) - m_x_offset, point(1) - m_y_offset };
 
@@ -755,8 +766,12 @@ std::string GCodeWriter::extrude_to_xyz(const Vec3d &point, double dE, const std
 {
     m_pos = point;
     m_lifted = 0;
-    if (!force_no_extrusion)
+    if (!force_no_extrusion) {
         m_extruder->extrude(dE);
+        if (m_current_object_config && m_current_object_config->hueforge_mode) {
+            // See comment in extrude_to_xy
+        }
+    }
     
     //BBS: take plate offset into consider
     Vec3d point_on_plate = { point(0) - m_x_offset, point(1) - m_y_offset, point(2) };
@@ -798,20 +813,24 @@ std::string GCodeWriter::_retract(double length, double restart_extra, const std
     since we ignore the actual configured retract_length which
     might be 0, in which case the retraction logic gets skipped. */
     if (this->config.use_firmware_retraction)
-        length = 1;
+        length = 1; // Firmware retraction handles actual length.
 
     std::string gcode;
     bool custom_retraction = false;
-    double retract_speed_val = m_extruder->retract_speed();
+    double retract_speed_val = m_extruder->retract_speed(); // Default retract speed
 
+    // HueForge specific retraction logic
     if (m_current_object_config && m_current_object_config->hueforge_mode && m_last_extrusion_role == erHueForgeInfill) {
-        double extruded_since_last_retract = m_extruder->E_absolute() - m_last_hueforge_e_unretracted;
+        // Calculate filament extruded since last unretract/reset for HueForge.
+        double extruded_since_last_unretract = m_extruder->E_absolute() - m_last_hueforge_e_unretracted;
+
         if (m_current_object_config->hueforge_min_extrusion_before_retract > 0 &&
-            extruded_since_last_retract < m_current_object_config->hueforge_min_extrusion_before_retract) {
-            return ""; // Skip retraction
+            extruded_since_last_unretract < m_current_object_config->hueforge_min_extrusion_before_retract) {
+            // Not enough filament extruded, skip this retraction.
+            return "";
         }
 
-        if (m_current_object_config->hueforge_retraction_length >= 0) {
+        if (m_current_object_config->hueforge_retraction_length >= 0) { // Use >= 0 to allow 0mm effective retraction
             length = m_current_object_config->hueforge_retraction_length;
             custom_retraction = true;
         }
@@ -821,18 +840,32 @@ std::string GCodeWriter::_retract(double length, double restart_extra, const std
         }
     }
 
-    if (double dE = m_extruder->retract(length, restart_extra); !is_zero(dE)) {
+    bool force_speed_gcode = (custom_retraction && length < EPSILON && length >= 0);
+
+    // Original BBS fix: if length is effectively zero (but not HueForge forcing it), make it EPSILON.
+    // If HueForge forces 0 length, length remains 0, but force_speed_gcode ensures F is emitted.
+    double effective_length_for_retract = length;
+    if (length < EPSILON && length >= 0 && !force_speed_gcode) { //BBS: also emit G1 Fxxx when length is zero
+        effective_length_for_retract = EPSILON;
+    }
+
+    if (double dE = m_extruder->retract(effective_length_for_retract, restart_extra); !is_zero(dE) || force_speed_gcode) {
         if (this->config.use_firmware_retraction) {
             gcode = FLAVOR_IS(gcfMachinekit) ? "G22 ; retract\n" : "G10 ; retract\n";
         } else {
             GCodeG1Formatter w;
-            w.emit_e(m_extruder->E());
+            // Only emit E if there's an actual change in extruder position or if HueForge forced a 0-length retract (for speed change)
+            if (!is_zero(dE) || force_speed_gcode) { // The check for force_speed_gcode here ensures F is emitted even if dE is zero.
+                 w.emit_e(m_extruder->E());
+            }
             w.emit_f(retract_speed_val * 60.);
             w.emit_comment(GCodeWriter::full_gcode_comment, comment + (custom_retraction ? " (HueForge)" : ""));
             gcode = w.string();
         }
-        if (m_current_object_config && m_current_object_config->hueforge_mode && m_last_extrusion_role == erHueForgeInfill) {
-            m_last_hueforge_e_unretracted = m_extruder->E_absolute(); // Store absolute E after retraction
+        if (custom_retraction) {
+            // Store the absolute E value *after* this HueForge retraction.
+            // This becomes the new baseline for hueforge_min_extrusion_before_retract.
+            m_last_hueforge_e_unretracted = m_extruder->E_absolute();
         }
     }
     
@@ -849,28 +882,30 @@ std::string GCodeWriter::unretract()
     double deretract_speed_val = m_extruder->deretract_speed();
     double unretract_amount = 0; // Will be set by m_extruder->unretract() by default
 
-    // Check if the retraction that occurred *before* this unretract was for HueForge.
-    // This implies m_last_extrusion_role should be checked based on its state *before* the travel move that might precede this unretract.
-    // For simplicity, we use the current m_last_extrusion_role. If issues arise, this logic might need refinement
-    // to explicitly track the role associated with the retraction event.
+    // HueForge specific de-retraction logic
+    // Check if the context is HueForge. This implies that the *next* extrusion will be HueForge,
+    // or that the retraction *that preceded this unretract* was HueForge.
+    // Using m_last_extrusion_role here might be tricky if a travel move changed context.
+    // However, typically unretract is paired with the role of the upcoming extrusion.
+    // For now, we assume m_last_extrusion_role correctly reflects the context for this unretract.
     if (m_current_object_config && m_current_object_config->hueforge_mode && m_last_extrusion_role == erHueForgeInfill) {
         if (m_current_object_config->hueforge_deretraction_speed > 0) {
             deretract_speed_val = m_current_object_config->hueforge_deretraction_speed;
             custom_deretraction = true;
+        } else if (m_current_object_config->hueforge_deretraction_speed == 0 && m_current_object_config->hueforge_retraction_speed > 0) {
+            // If deretract speed is 0, use hueforge_retraction_speed if it was set (common pattern for same speed)
+            deretract_speed_val = m_current_object_config->hueforge_retraction_speed;
+            custom_deretraction = true;
         }
-        // If m_last_hueforge_e_unretracted was set, it means the previous retraction was HueForge-specific.
-        // The amount to unretract is implicitly handled by m_extruder->unretract() which uses the stored retracted amount.
-        // No special logic needed for unretract_amount here unless HueForge needs to override the amount itself,
-        // which is not typical (usually unretract matches retract).
-        // We reset m_last_hueforge_e_unretracted after any unretraction if it was a HueForge infill.
-        // This is reset here to ensure it's cleared even if the unretraction amount is zero.
-         m_last_hueforge_e_unretracted = m_extruder->E_absolute() + m_extruder->retracted_diff(); // Expected E after unretraction
+        // Reset m_last_hueforge_e_unretracted to current absolute E *before* the unretraction extrusion occurs.
+        // This marks the starting point for measuring extruded filament for the next min_extrusion_before_retract check.
+        m_last_hueforge_e_unretracted = m_extruder->E_absolute();
     }
 
     if (FLAVOR_IS(gcfMakerWare))
         gcode = "M101 ; extruder on\n";
     
-    if (double dE = m_extruder->unretract(&unretract_amount); !is_zero(dE)) { // Pass address if unretract can take a pointer to override amount
+    if (double dE = m_extruder->unretract(&unretract_amount); !is_zero(dE)) {
         if (this->config.use_firmware_retraction) {
             gcode += FLAVOR_IS(gcfMachinekit) ? "G23 ; unretract\n" : "G11 ; unretract\n";
             gcode += this->reset_e();

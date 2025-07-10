@@ -1816,6 +1816,15 @@ void PrintConfigDef::init_fff_params()
     def->ratio_over = "nozzle_diameter";
     def->min = 0;
     def->mode = comAdvanced;
+
+    def = this->add("hueforge_min_region_area", coFloat);
+    def->set_default_value(new ConfigOptionFloat(2.0)); // Defaulting to 2.0 mm^2
+    def->label = L("HueForge: Min Region Area");
+    def->tooltip = L("Minimum area (in mm^2) for a HueForge region to receive standard infill treatment. Regions smaller than this will be handled specially (e.g., forced fill) to ensure they are 'painted'.");
+    def->sidetext = "mm^2";
+    def->category = L("Quality"); // Or a new "HueForge" category
+    def->min = 0;
+    def->mode = comAdvanced;
 }
 
 #include <cereal/types/polymorphic.hpp>

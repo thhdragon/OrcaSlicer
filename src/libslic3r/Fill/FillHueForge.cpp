@@ -25,7 +25,14 @@ Polylines FillHueForge::fill_surface(const Surface *surface, const FillParams &p
 
         double nozzle_diameter = params.flow.nozzle_diameter();
         if (nozzle_diameter <= 0) nozzle_diameter = 0.4; // Default if not set
-        double small_region_area_threshold = scale_(scale_((2.0 * nozzle_diameter) * (2.0 * nozzle_diameter)));
+
+        // Read hueforge_min_region_area from config
+        double min_region_area_mm2 = 2.0; // Default fallback
+        if (po_config_ptr->option<ConfigOptionFloat>("hueforge_min_region_area")) {
+            min_region_area_mm2 = po_config_ptr->opt_float("hueforge_min_region_area");
+        }
+        double small_region_area_threshold_scaled = scale_(scale_(min_region_area_mm2));
+
 
         PrintRegionConfig modified_region_config;
         if (params.config) {
@@ -62,9 +69,11 @@ Polylines FillHueForge::fill_surface(const Surface *surface, const FillParams &p
 
         for (const ExPolygon& region_expoly : surface->expolygon) {
             FillParams current_iter_params = hueforge_params; // Start with HueForge-tuned params for this specific region
-            bool is_small_region = region_expoly.area() < small_region_area_threshold;
+            bool is_small_region = region_expoly.area() < small_region_area_threshold_scaled;
 
             if (is_small_region) {
+                // For very small regions, force 100% density to ensure they are "painted".
+                // Further refinement could adjust line spacing/width if even 100% density results in no lines.
                 current_iter_params.density = 1.0f;
             }
 

@@ -917,6 +917,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionPercent,             hueforge_infill_wall_overlap))
     ((ConfigOptionFloatOrPercent,      hueforge_anchor_length))
     ((ConfigOptionFloatOrPercent,      hueforge_anchor_length_max))
+    ((ConfigOptionFloat,               hueforge_min_region_area)) // Min area for a region to get standard HueForge treatment
 
     // Move all acceleration and jerk settings to object
     ((ConfigOptionFloat,              default_acceleration))
