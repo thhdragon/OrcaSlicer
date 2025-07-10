@@ -31,9 +31,10 @@ public:
     float   wall_transition_filter_deviation;
     int     wall_distribution_count;
     bool    is_top_or_bottom_layer;
+    ArachneThinWallStrategy thin_wall_strategy; // Added new strategy
 };
 
-WallToolPathsParams make_paths_params(const int layer_id, const PrintObjectConfig &print_object_config, const PrintConfig &print_config);
+WallToolPathsParams make_paths_params(const int layer_id, const PrintRegionConfig &region_config, const PrintObjectConfig &print_object_config, const PrintConfig &print_config);
 
 class WallToolPaths
 {

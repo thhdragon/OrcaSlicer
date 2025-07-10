@@ -23,6 +23,7 @@ add_executable(${_TEST_NAME}_tests
     test_timeutils.cpp
     test_indexed_triangle_set.cpp
     test_shrinkage.cpp
+    test_arachne_heuristics.cpp
     ../libnest2d/printer_parts.cpp
 	)
 

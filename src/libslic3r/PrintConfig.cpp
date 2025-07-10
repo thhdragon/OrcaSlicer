@@ -458,6 +458,13 @@ static const t_config_enum_values s_keys_map_WipeTowerWallType{
 };
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(WipeTowerWallType)
 
+static t_config_enum_values s_keys_map_ArachneThinWallStrategy {
+    { "balanced",       int(ArachneThinWallStrategy::awsBalanced) },
+    { "quality",        int(ArachneThinWallStrategy::awsPreferQuality) },
+    { "strength",       int(ArachneThinWallStrategy::awsPreferStrength) }
+};
+CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(ArachneThinWallStrategy)
+
 static void assign_printer_technology_to_unknown(t_optiondef_map &options, PrinterTechnology printer_technology)
 {
     for (std::pair<const t_config_option_key, ConfigOptionDef> &kvp : options)
@@ -5882,6 +5889,23 @@ void PrintConfigDef::init_fff_params()
     def->enum_labels.push_back(L("Arachne"));
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionEnum<PerimeterGeneratorType>(PerimeterGeneratorType::Arachne));
+
+    def = this->add("arachne_thin_wall_strategy", coEnum);
+    def->label = L("Arachne thin wall strategy");
+    def->category = L("Quality");
+    def->tooltip = L("Strategy for how Arachne engine handles walls thinner than the nominal line width but wider than minimum feature size.\n"
+                     "- Balanced: Default Arachne behavior, aims for a balance between detail and robustness.\n"
+                     "- Quality: Prefers using more, thinner lines to better represent fine details.\n"
+                     "- Strength: Prefers using fewer, thicker lines for more robust thin walls, potentially sacrificing some detail.");
+    def->enum_keys_map = &ConfigOptionEnum<ArachneThinWallStrategy>::get_enum_values();
+    def->enum_values.push_back("balanced");
+    def->enum_values.push_back("quality");
+    def->enum_values.push_back("strength");
+    def->enum_labels.push_back(L("Balanced"));
+    def->enum_labels.push_back(L("Prefer Quality"));
+    def->enum_labels.push_back(L("Prefer Strength"));
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionEnum<ArachneThinWallStrategy>(ArachneThinWallStrategy::awsBalanced));
 
     def = this->add("wall_transition_length", coPercent);
     def->label = L("Wall transition length");

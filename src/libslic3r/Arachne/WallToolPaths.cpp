@@ -23,15 +23,18 @@
 namespace Slic3r::Arachne
 {
 
-WallToolPathsParams make_paths_params(const int layer_id, const PrintObjectConfig &print_object_config, const PrintConfig &print_config)
+WallToolPathsParams make_paths_params(const int layer_id, const PrintRegionConfig &region_config, const PrintObjectConfig &print_object_config, const PrintConfig &print_config)
 {
     WallToolPathsParams input_params;
     {
         const double min_nozzle_diameter = *std::min_element(print_config.nozzle_diameter.values.begin(), print_config.nozzle_diameter.values.end());
+        // Note: min_feature_size, min_bead_width etc. are part of PrintObjectConfig, not PrintRegionConfig directly.
+        // However, PrintRegionConfig inherits from PrintObjectConfig, so this access should be fine if region_config is used.
+        // For clarity, let's assume these specific ones come from print_object_config as they are object-wide.
         if (const auto &min_feature_size_opt = print_object_config.min_feature_size)
             input_params.min_feature_size = min_feature_size_opt.value * 0.01 * min_nozzle_diameter;
 
-        if (const auto &min_wall_length_factor_opt = print_object_config.min_length_factor)
+        if (const auto &min_wall_length_factor_opt = print_object_config.min_length_factor) // This is on PrintObjectConfig in current code
             input_params.min_length_factor = min_wall_length_factor_opt.value;
         else
             input_params.min_length_factor = 0.5f;
@@ -53,7 +56,10 @@ WallToolPathsParams make_paths_params(const int layer_id, const PrintObjectConfi
         input_params.wall_transition_angle   = print_object_config.wall_transition_angle.value;
         input_params.wall_distribution_count = print_object_config.wall_distribution_count.value;
 
-        input_params.is_top_or_bottom_layer = false; // Set to default value
+        // Get the new strategy from PrintRegionConfig
+        input_params.thin_wall_strategy = region_config.arachne_thin_wall_strategy.value;
+
+        input_params.is_top_or_bottom_layer = false; // Set to default value, might be updated later in PerimeterGenerator
     }
 
     return input_params;
@@ -525,7 +531,10 @@ const std::vector<VariableWidthLines> &WallToolPaths::generate()
             wall_add_middle_threshold,
             max_bead_count,
             wall_0_inset,
-            wall_distribution_count
+            wall_distribution_count,
+            0.5, // minimum_variable_line_width - default from factory, consider making this configurable too if needed
+            m_params.thin_wall_strategy, // Pass the new strategy
+            m_params.is_top_or_bottom_layer ? 0 : 1 // Pass a simplified layer_id context for logging, could be actual layer_id if available in m_params
         );
     const coord_t transition_filter_dist   = scaled<coord_t>(100.f);
     const coord_t allowed_filter_deviation = wall_transition_filter_deviation;

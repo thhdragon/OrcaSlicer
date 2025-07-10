@@ -256,6 +256,14 @@ enum class PerimeterGeneratorType
     Arachne
 };
 
+// Orca: Arachne Thin Wall Strategy
+enum class ArachneThinWallStrategy {
+    awsBalanced,
+    awsPreferQuality,
+    awsPreferStrength,
+    Count
+};
+
 // BBS
 enum OverhangFanThreshold {
     Overhang_threshold_none = 0,
@@ -461,6 +469,7 @@ CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(PrintHostType)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(AuthorizationType)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(WipeTowerWallType)
 CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(PerimeterGeneratorType)
+CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS(ArachneThinWallStrategy)
 
 #undef CONFIG_OPTION_ENUM_DECLARE_STATIC_MAPS
 
@@ -1091,6 +1100,9 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionPercent,              outer_wall_shrinkage_xy))
     ((ConfigOptionPercent,              inner_wall_shrinkage_xy))
     ((ConfigOptionPercent,              hole_shrinkage_xy))
+
+    // Arachne thin wall strategy
+    ((ConfigOptionEnum<ArachneThinWallStrategy>, arachne_thin_wall_strategy))
 )
 
 PRINT_CONFIG_CLASS_DEFINE(
