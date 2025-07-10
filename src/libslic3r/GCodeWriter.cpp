@@ -806,7 +806,7 @@ std::string GCodeWriter::_retract(double length, double restart_extra, const std
 
     if (m_current_object_config && m_current_object_config->hueforge_mode && m_last_extrusion_role == erHueForgeInfill) {
         double extruded_since_last_retract = m_extruder->E_absolute() - m_last_hueforge_e_unretracted;
-        if (m_current_object_config->hueforge_min_extrusion_before_retract > 0 && 
+        if (m_current_object_config->hueforge_min_extrusion_before_retract > 0 &&
             extruded_since_last_retract < m_current_object_config->hueforge_min_extrusion_before_retract) {
             return ""; // Skip retraction
         }

@@ -1,6 +1,7 @@
 #ifndef slic3r_GCodeWriter_hpp_
 #define slic3r_GCodeWriter_hpp_
 
+#include "ExtrusionEntity.hpp" // For ExtrusionRole
 #include "libslic3r.h"
 #include <string>
 #include <charconv>
@@ -177,7 +178,7 @@ public:
     double          m_current_speed;
     bool            m_is_first_layer = true;
     double          m_last_hueforge_e_unretracted { 0.0 }; // For HueForge min_extrusion_before_retract
-    ExtrusionRole   m_last_extrusion_role { erNone }; // To know the role of the extrusion preceding a retraction
+    Slic3r::ExtrusionRole   m_last_extrusion_role { Slic3r::erNone }; // To know the role of the extrusion preceding a retraction
     const PrintObjectConfig* m_current_object_config { nullptr };
 
     enum class Acceleration {

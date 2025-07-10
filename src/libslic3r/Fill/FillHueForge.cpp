@@ -1,6 +1,6 @@
 #include "FillHueForge.hpp"
 #include "../Surface.hpp"
-#include "../PrintConfig.hpp" 
+#include "../PrintConfig.hpp"
 #include "../ExtrusionEntityCollection.hpp" // Required for ExtrusionEntitiesPtr and ExtrusionEntityCollection
 #include "../Flow.hpp"                     // Required for Flow
 
@@ -23,7 +23,7 @@ void FillHueForge::fill_surface_extrusion(const Surface *surface, const FillPara
         Polylines all_polylines;
 
         double nozzle_diameter = params.flow.nozzle_diameter();
-        if (nozzle_diameter <= 0) nozzle_diameter = 0.4; 
+        if (nozzle_diameter <= 0) nozzle_diameter = 0.4;
         double small_region_area_threshold = scale_(scale_( (2.0 * nozzle_diameter) * (2.0 * nozzle_diameter) ));
 
         // Create a mutable copy of PrintRegionConfig if we need to change it.
@@ -34,29 +34,27 @@ void FillHueForge::fill_surface_extrusion(const Surface *surface, const FillPara
         // Set a small infill_wall_overlap for HueForge mode.
         // This is a percentage of the sparse infill line width.
         // TODO: Make this (5.0) a new ConfigOption: `hueforge_infill_wall_overlap_percent`
-        modified_region_config.infill_wall_overlap.value = 5.0; 
-
+        modified_region_config.infill_wall_overlap.value = 5.0;
         FillParams hueforge_params = params;
         hueforge_params.config = &modified_region_config; // Point to our modified region config
 
         // Adjust anchor lengths for HueForge mode to prefer shorter or no anchors.
         // TODO: Make these configurable: `hueforge_anchor_length`, `hueforge_anchor_length_max`
-        hueforge_params.anchor_length = 0; 
-        hueforge_params.anchor_length_max = scale_(0.25 * nozzle_diameter); 
+        hueforge_params.anchor_length = 0;
+        hueforge_params.anchor_length_max = scale_(0.25 * nozzle_diameter);
 
 
         for (const ExPolygon& region_expoly : surface->expolygon) {
             FillParams current_iter_params = hueforge_params; // Start with HueForge-tuned params
             bool is_small_region = region_expoly.area() < small_region_area_threshold;
-            
             if (is_small_region) {
                 // For very small regions, force 100% density to ensure they are "painted".
-                current_iter_params.density = 1.0f; 
+                current_iter_params.density = 1.0f;
             }
-            
+
             Surface current_surface_part = *surface;
             current_surface_part.expolygon = region_expoly; // Process this part of the surface
-            
+          
             // Call the parent's (FillRectilinear) fill_surface method.
             // This method internally calculates `this->overlap` based on `current_iter_params.config->infill_wall_overlap`
             // and `current_iter_params.flow.width()`.
@@ -64,7 +62,7 @@ void FillHueForge::fill_surface_extrusion(const Surface *surface, const FillPara
             Polylines region_polylines = FillRectilinear::fill_surface(&current_surface_part, current_iter_params);
             all_polylines.insert(all_polylines.end(), region_polylines.begin(), region_polylines.end());
         }
-        
+
         return all_polylines;
 
     } else {
@@ -86,7 +84,7 @@ void FillHueForge::fill_surface_extrusion(const Surface *surface, const FillPara
             // TODO: Implement actual small region detection and handling.
             // This is a placeholder. A real implementation would check the width/area of `region_expoly`.
             bool is_small_region = false; // region_expoly.area() < small_region_area_threshold;
-            
+
             // A more robust check for "small" might be to find the medial axis or estimate thickness.
             // For now, we'll treat all regions under HueForge mode with potentially modified params.
 
@@ -112,7 +110,7 @@ void FillHueForge::fill_surface_extrusion(const Surface *surface, const FillPara
                 all_polylines.insert(all_polylines.end(), region_polylines.begin(), region_polylines.end());
             }
         }
-        
+
         // TODO: Potentially apply custom connection logic for HueForge if needed
         // For now, rely on parent's connection logic (or lack thereof if dont_connect is true)
 
