@@ -37,6 +37,7 @@ enum ExtrusionRole : uint8_t {
     erSupportTransition,
     erWipeTower,
     erCustom,
+    erHueForgeInfill, // Added for HueForge specific infill
     // Extrusion role for a collection with multiple extrusion roles.
     erMixed,
     erCount
@@ -78,7 +79,8 @@ inline bool is_infill(ExtrusionRole role)
         || role == erSolidInfill
         || role == erTopSolidInfill
         || role == erBottomSurface
-        || role == erIroning;
+        || role == erIroning
+        || role == erHueForgeInfill;
 }
 
 inline bool is_top_surface(ExtrusionRole role)
@@ -93,7 +95,8 @@ inline bool is_solid_infill(ExtrusionRole role)
         || role == erSolidInfill
         || role == erTopSolidInfill
         || role == erBottomSurface
-        || role == erIroning;
+        || role == erIroning
+        || role == erHueForgeInfill;
 }
 
 inline bool is_bridge(ExtrusionRole role) {

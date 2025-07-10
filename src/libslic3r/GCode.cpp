@@ -3632,6 +3632,17 @@ LayerResult GCode::process_layer(
         // Nothing to extrude.
         return result;
 
+    // Set the current object's config in the GCodeWriter
+    // Assuming single_object_instance_idx is valid or we take the first object if not in sequential mode.
+    if (single_object_instance_idx != size_t(-1) && single_object_instance_idx < layers[0].original_object->instances().size()) {
+        m_writer.set_current_object_config(&(layers[0].original_object->instances()[single_object_instance_idx].print_object->config()));
+    } else if (!layers.empty() && layers[0].original_object != nullptr) {
+        // Default to the first object's config if not in specific instance mode or if index is out of bounds.
+        // This might need refinement if multiple objects with different HueForge settings are on the plate.
+        m_writer.set_current_object_config(&(layers[0].original_object->config()));
+    }
+
+
     // Extract 1st object_layer and support_layer of this set of layers with an equal print_z.
     coordf_t             print_z       = layer.print_z;
     //BBS: using layer id to judge whether the layer is first layer is wrong. Because if the normal
@@ -5560,6 +5571,9 @@ std::string GCode::_extrude(const ExtrusionPath &path, std::string description, 
         gcode += buf;
     }
     
+    // Update last extrusion role in GCodeWriter
+    m_writer.m_last_extrusion_role = path.role();
+
     // Orca: Dynamic PA
     // Post processor flag generation code segment when option to emit only at role changes is enabled
     // Variables published to the post processor:
