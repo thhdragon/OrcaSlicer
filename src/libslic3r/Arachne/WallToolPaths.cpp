@@ -59,6 +59,11 @@ WallToolPathsParams make_paths_params(const int layer_id, const PrintRegionConfi
         // Get the new strategy from PrintRegionConfig
         input_params.thin_wall_strategy = region_config.arachne_thin_wall_strategy.value;
 
+        // Get acute corner handling parameters from PrintRegionConfig
+        input_params.arachne_acute_corner_angle_deg = region_config.arachne_acute_corner_angle.value;
+        input_params.arachne_corner_fill_extension_length_factor = region_config.arachne_corner_fill_extension_length_factor.value;
+        input_params.arachne_corner_fill_min_length_mm = region_config.arachne_corner_fill_min_length.value;
+
         input_params.is_top_or_bottom_layer = false; // Set to default value, might be updated later in PerimeterGenerator
     }
 

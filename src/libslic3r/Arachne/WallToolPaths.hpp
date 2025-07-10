@@ -31,7 +31,11 @@ public:
     float   wall_transition_filter_deviation;
     int     wall_distribution_count;
     bool    is_top_or_bottom_layer;
-    ArachneThinWallStrategy thin_wall_strategy; // Added new strategy
+    ArachneThinWallStrategy thin_wall_strategy;
+    // Acute Corner Params
+    float   arachne_acute_corner_angle_deg;
+    float   arachne_corner_fill_extension_length_factor;
+    float   arachne_corner_fill_min_length_mm;
 };
 
 WallToolPathsParams make_paths_params(const int layer_id, const PrintRegionConfig &region_config, const PrintObjectConfig &print_object_config, const PrintConfig &print_config);

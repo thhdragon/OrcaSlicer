@@ -1103,6 +1103,11 @@ PRINT_CONFIG_CLASS_DEFINE(
 
     // Arachne thin wall strategy
     ((ConfigOptionEnum<ArachneThinWallStrategy>, arachne_thin_wall_strategy))
+
+    // Arachne acute corner handling
+    ((ConfigOptionFloat,            arachne_acute_corner_angle))
+    ((ConfigOptionFloat,            arachne_corner_fill_extension_length_factor))
+    ((ConfigOptionFloat,            arachne_corner_fill_min_length))
 )
 
 PRINT_CONFIG_CLASS_DEFINE(

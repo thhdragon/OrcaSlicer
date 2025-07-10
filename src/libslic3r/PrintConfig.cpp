@@ -5907,6 +5907,36 @@ void PrintConfigDef::init_fff_params()
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionEnum<ArachneThinWallStrategy>(ArachneThinWallStrategy::awsBalanced));
 
+    def = this->add("arachne_acute_corner_angle", coFloat);
+    def->label = L("Arachne acute corner angle threshold");
+    def->category = L("Quality");
+    def->tooltip = L("Angles below this value (in degrees) are considered acute corners for specialized handling by Arachne. Affects how internal perimeters meet sharp external corners.");
+    def->sidetext = "°";
+    def->min = 0;
+    def->max = 60; // Max sensible angle for "acute"
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(30.0));
+
+    def = this->add("arachne_corner_fill_extension_length_factor", coFloat);
+    def->label = L("Arachne corner fill length factor");
+    def->category = L("Quality");
+    def->tooltip = L("Factor of nozzle diameter determining how far an internal perimeter might extend to fill an acute corner void. Only active if corner angle is below threshold.");
+    def->sidetext = L("x nozzle diameter");
+    def->min = 0.0;
+    def->max = 5.0;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(1.5));
+
+    def = this->add("arachne_corner_fill_min_length", coFloat);
+    def->label = L("Arachne corner fill min length");
+    def->category = L("Quality");
+    def->tooltip = L("Absolute minimum length (in mm) for an acute corner fill extension. Prevents overly tiny fills.");
+    def->sidetext = "mm";
+    def->min = 0.0;
+    def->max = 2.0;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(0.2));
+
     def = this->add("wall_transition_length", coPercent);
     def->label = L("Wall transition length");
     def->category = L("Quality");
