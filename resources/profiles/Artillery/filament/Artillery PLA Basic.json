@@ -22,6 +22,9 @@
     "filament_type": [
         "PLA Basic"
     ],
+    "top_solid_infill_flow_ratio": [
+        1.0
+    ],
     "filament_vendor": [
         "Artillery"
     ],

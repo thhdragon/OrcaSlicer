@@ -223,7 +223,6 @@
     "timelapse_type": "0",
     "top_shell_layers": "4",
     "top_shell_thickness": "0.8",
-    "top_solid_infill_flow_ratio": "1",
     "top_surface_acceleration": "0",
     "top_surface_jerk": "9",
     "top_surface_line_width": "0.42",

@@ -1044,7 +1044,6 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionFloat,                 filter_out_gap_fill))
     ((ConfigOptionFloatOrPercent,       small_perimeter_speed))
     ((ConfigOptionFloat,                small_perimeter_threshold))
-    ((ConfigOptionFloat,                top_solid_infill_flow_ratio))
     ((ConfigOptionFloat,                bottom_solid_infill_flow_ratio))
     ((ConfigOptionFloatOrPercent,       infill_anchor))
     ((ConfigOptionFloatOrPercent,       infill_anchor_max))
@@ -1247,6 +1246,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionStrings,              small_area_infill_flow_compensation_model))
 
     ((ConfigOptionBool,                has_scarf_joint_seam))
+    ((ConfigOptionFloats,              top_solid_infill_flow_ratio))
 )
 
 // This object is mapped to Perl as Slic3r::Config::Print.

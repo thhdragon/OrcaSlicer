@@ -1055,6 +1055,17 @@ void PrintConfigDef::init_fff_params()
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloat(1));
 
+    def = this->add("top_solid_infill_flow_ratio", coFloats);
+    def->label = L("Top surface flow ratio");
+    def->category = L("Advanced");
+    def->tooltip = L("This factor affects the amount of material for top solid infill for this filament. "
+                     "You can decrease it slightly to have smooth surface finish.\n\n"
+                     "The actual top surface flow used is calculated by multiplying this value with the object's flow ratio (if set).");
+    def->min = 0;
+    def->max = 2;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloats { 1.0 });
+
     def = this->add("bottom_solid_infill_flow_ratio", coFloat);
     def->label = L("Bottom surface flow ratio");
     def->category = L("Advanced");
@@ -1297,6 +1308,17 @@ void PrintConfigDef::init_fff_params()
     def->max = 2;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloat(0.));
+
+    // def = this->add("top_solid_infill_flow_ratio", coFloat);
+    // def->label = L("Top surface flow ratio");
+    // def->category = L("Advanced");
+    // def->tooltip = L("This factor affects the amount of material for top solid infill. "
+    //                  "You can decrease it slightly to have smooth surface finish.\n\n"
+    //                  "The actual top surface flow used is calculated by multiplying this value with the filament flow ratio, and if set, the object's flow ratio.");
+    // def->min = 0;
+    // def->max = 2;
+    // def->mode = comAdvanced;
+    // def->set_default_value(new ConfigOptionFloat(1));
 
     def = this->add("brim_ears", coBool);
     def->label = L("Brim ears");
@@ -1850,6 +1872,28 @@ void PrintConfigDef::init_fff_params()
     def->max = 2;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloats { 1. });
+
+    def = this->add("top_solid_infill_flow_ratio", coFloats);
+    def->label = L("Top surface flow ratio");
+    def->category = L("Advanced");
+    def->tooltip = L("This factor affects the amount of material for top solid infill for this filament. "
+                     "You can decrease it slightly to have smooth surface finish.\n\n"
+                     "The actual top surface flow used is calculated by multiplying this value with the object's flow ratio (if set).");
+    def->min = 0;
+    def->max = 2;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloats { 1.0 });
+
+    // def = this->add("top_solid_infill_flow_ratio", coFloats);
+    // def->label = L("Top surface flow ratio");
+    // def->category = L("Advanced");
+    // def->tooltip = L("This factor affects the amount of material for top solid infill for this filament. "
+    //                  "You can decrease it slightly to have smooth surface finish.\n\n"
+    //                  "The actual top surface flow used is calculated by multiplying this value with the object's flow ratio (if set).");
+    // def->min = 0;
+    // def->max = 2;
+    // def->mode = comAdvanced;
+    // def->set_default_value(new ConfigOptionFloats { 1.0 });
 
     def = this->add("print_flow_ratio", coFloat);
     def->label = L("Flow ratio");
@@ -6038,7 +6082,7 @@ void PrintConfigDef::init_filament_option_keys()
         "retraction_length", "z_hop", "z_hop_types", "retract_lift_above", "retract_lift_below", "retract_lift_enforce", "retraction_speed", "deretraction_speed",
         "retract_before_wipe", "retract_restart_extra", "retraction_minimum_travel", "wipe", "wipe_distance",
         "retract_when_changing_layer", "retract_length_toolchange", "retract_restart_extra_toolchange", "filament_colour",
-        "default_filament_profile","retraction_distances_when_cut","long_retractions_when_cut"/*,"filament_seam_gap"*/
+        "default_filament_profile","retraction_distances_when_cut","long_retractions_when_cut", "top_solid_infill_flow_ratio"/*,"filament_seam_gap"*/
     };
 
     m_filament_retract_keys = {

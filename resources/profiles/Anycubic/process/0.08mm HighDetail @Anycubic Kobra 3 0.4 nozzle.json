@@ -230,7 +230,6 @@
     "top_bottom_infill_wall_overlap": "25%",
     "top_shell_layers": "9",
     "top_shell_thickness": "0.8",
-    "top_solid_infill_flow_ratio": "0.97",
     "top_surface_acceleration": "2000",
     "top_surface_jerk": "9",
     "top_surface_line_width": "0.42",
